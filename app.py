@@ -26,7 +26,7 @@ def load_ledger():
 # ৩. জেমিনি এআই ব্যবহার করে বাংলা মেসেজ থেকে হিসাব বের করার ফাংশন
 def parse_message_with_ai(message):
     # জেমিনি মডেল সেটআপ
-    model = genai.GenerativeModel('gemini-1.5-pro')
+    model = genai.GenerativeModel('gemini-pro')
     
     prompt = f"""
     You are a business accounting assistant. Analyze the following Bengali text about stock or sales update and extract the details into a structured JSON format.
