@@ -14,109 +14,105 @@ EXCEL_FILE = "business_ledger.xlsx"
 
 # ২. এক্সেল ফাইল লোড বা তৈরি করার ফাংশন
 def load_ledger():
-    columns = ["তারিখ", "বিবরণ (Item)", "নাম (Party)", "স্টক ইন (In)", "স্টক আউট (Out)", "দর (Rate)", "মোট টাকা (Amount)"]
+    columns = ["তারিখ", "বিবরণ (Item)", "নাম (Party)", "স্টক ইন (পিস)", "সেলস/স্টক আউট (পিস)", "দর (টাকা)", "মোট টাকা", "ধরণ"]
     if os.path.exists(EXCEL_FILE):
         try:
-            df = pd.read_excel(EXCEL_FILE)
-            for col in columns:
-                if col not in df.columns:
-                    df[col] = 0
-            return df[columns]
-        except:
+            return pd.read_excel(EXCEL_FILE)
+        except Exception:
             return pd.DataFrame(columns=columns)
     else:
         return pd.DataFrame(columns=columns)
 
-# পৃষ্ঠা সেটআপ
-st.set_page_config(layout="wide")
+# ৩. জেমিনি এআই ব্যবহার করে বাংলা মেসেজ থেকে হিসাব বের করার ফাংশন
+def parse_message_with_ai(message):
+    # জেমিনি মডেল সেটআপ
+    model = genai.GenerativeModel('gemini-1.5-pro')
+    
+    prompt = f"""
+    You are a business accounting assistant. Analyze the following Bengali text about stock or sales update and extract the details into a structured JSON format.
+    
+    Text: "{message}"
+    
+    Respond ONLY with a valid JSON object matching this structure (do not include any markdown formatting like ```json or ```, just the raw JSON text):
+    {{
+        "item": "Name of the product/item or description",
+        "party": "Name of the party or person if mentioned, otherwise leave empty string",
+        "stock_in": integer value if stock is received or added, otherwise 0,
+        "stock_out": integer value if stock is sold or delivered, otherwise 0,
+        "rate": number value of rate per piece or item if mentioned, otherwise 0,
+        "type": "Stock In" or "Sales" based on the transaction
+    }}
+    """
+    try:
+        response = model.generate_content(prompt)
+        # JSON থেকে ডেটা বের করা
+        clean_text = response.text.strip().replace("```json", "").replace("```", "")
+        data = json.loads(clean_text)
+        return data
+    except Exception as e:
+        st.error(f"এআই প্রসেসিংয়ে সমস্যা হয়েছে: {e}")
+        return None
+
+# --- স্ট্রিমলিট ইউজার ইন্টারফেস (UI) ---
+st.set_page_config(page_title="Smart Business Ledger Bot", layout="wide")
+
 st.title("Smart Business Ledger Bot 📊")
-st.write("আপনার ব্যবসার স্টক, সেলস এবং টাকার হিসাব আপডেট করার জন্য নিচে মেসেজ লিখুন।")
+st.write("### আপনার ব্যবসার স্টক, সেলস এবং টাকার হিসাব আপডেট করার জন্য নিচে মেসেজ লিখুন।")
 
-# ৩. লেজার ডেটা লোড করা
-ledger_df = load_ledger()
-
-# স্ক্রিনটিকে দুটি ভাগে ভাগ করা (বামদিকে ইনপুট, ডানদিকে লাইভ এক্সেল)
-col1, col2 = st.columns([1, 1.3])
+# স্ক্রিন দুটি ভাগে ভাগ করা (বামদিকে এন্ট্রি, ডানদিকে লাইভ এক্সেল খাতা)
+col1, col2 = st.columns([1, 1])
 
 with col1:
     st.subheader("📝 নতুন এন্ট্রি করুন")
-    user_input = st.text_input("মেসেজ লিখুন (যেমন: 7D SET CHADOR 200 PC 218 TAKA):", key="input")
+    user_message = st.text_area("মেসেজ লিখুন (যেমন: 7D SET CHADOR 200 PC 218 TAKA):", height=100)
     
-    if st.button("লেজারে যোগ করুন"):
-        if user_input:
-            with st.spinner("AI ডেটা প্রসেস করছে..."):
-                try:
-                    # ৪. এআই মডেল সেটআপ
-                    prompt = f"""
-                    You are a professional business accounting assistant. Analyze the text and extract structured information.
-                    Respond ONLY with a valid JSON object. Do not include markdown formatting, backticks, or any conversational text.
+    if st.button("লেজারে যোগ করুন", type="primary"):
+        if user_message.strip() != "":
+            with st.spinner("এআই আপনার মেসেজটি পড়ে হিসাব তৈরি করছে..."):
+                ai_result = parse_message_with_ai(user_message)
+                
+                if ai_result:
+                    # এক্সেল লোড করা
+                    df = load_ledger()
                     
-                    Text: "{user_input}"
-                    
-                    JSON format to return:
-                    {{
-                        "item": "Name or specifications of the product in Bengali/English (e.g., 7D SET CHADOR)",
-                        "party": "Name of customer/supplier/brand if mentioned. If not, use 'নগদ'",
-                        "type": "Either 'IN' if stock is added/received or 'OUT' if sold/delivered",
-                        "quantity": integer number of pieces/units,
-                        "rate": number indicating price per unit/piece. If not specified, use 0
-                    }}
-                    """
-                    
-                    model = genai.GenerativeModel("gemini-1.5-flash")
-                    response = model.generate_content(prompt)
-                    
-                    # JSON পার্স করা
-                    clean_text = response.text.strip().replace("```json", "").replace("```", "")
-                    data = json.loads(clean_text)
-                    
-                    # ৫. দর ও মোট টাকা হিসাব করা
-                    current_date = datetime.now().strftime("%d-%m-%Y")
-                    qty = data.get('quantity', 0)
-                    rate = data.get('rate', 0)
+                    # নতুন রো (Row) তৈরি
+                    current_date = datetime.now().strftime("%d-%m-%Y %H:%M")
+                    rate = float(ai_result.get("rate", 0))
+                    qty = int(ai_result.get("stock_in", 0)) if ai_result.get("stock_in", 0) > 0 else int(ai_result.get("stock_out", 0))
                     total_amount = qty * rate
-                    
-                    stock_in = qty if data.get('type') == 'IN' else 0
-                    stock_out = qty if data.get('type') == 'OUT' else 0
                     
                     new_row = {
                         "তারিখ": current_date,
-                        "বিবরণ (Item)": data.get('item', 'অজানা মাল'),
-                        "নাম (Party)": data.get('party', 'নগদ'),
-                        "স্টক ইন (In)": stock_in,
-                        "স্টক আউট (Out)": stock_out,
-                        "দর (Rate)": rate,
-                        "মোট টাকা (Amount)": total_amount
+                        "বিবরণ (Item)": ai_result.get("item", ""),
+                        "নাম (Party)": ai_result.get("party", ""),
+                        "স্টক ইন (পিস)": ai_result.get("stock_in", 0),
+                        "সেলস/স্টক আউট (পিস)": ai_result.get("stock_out", 0),
+                        "দর (টাকা)": rate,
+                        "মোট টাকা": total_amount,
+                        "ধরণ": ai_result.get("type", "Sales")
                     }
                     
-                    ledger_df = pd.concat([ledger_df, pd.DataFrame([new_row])], ignore_index=True)
+                    # ডেটা ফ্রেমে যোগ করা ও সেভ করা
+                    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+                    df.to_excel(EXCEL_FILE, index=False)
                     
-                    try:
-                        ledger_df.to_excel(EXCEL_FILE, index=False)
-                    except:
-                        ledger_df.to_csv("business_ledger.csv", index=False)
-                    
-                    st.success("✅ লেজারে সফলভাবে আপডেট করা হয়েছে!")
-                    st.rerun()
-                    
-                except Exception as e:
-                    st.error(f"ভুলটি হলো: {str(e)}")
+                    st.success("✅ লেজার খাতায় সফলভাবে হিসাব যোগ করা হয়েছে!")
         else:
-            st.warning("অনুগ্রহ করে সঠিক মেসেজ দিন।")
+            st.warning("দয়া করে আগে একটি মেসেজ লিখুন।")
 
 with col2:
     st.subheader("📈 লাইভ লেজার খাতা (Excel View)")
+    ledger_df = load_ledger()
     if not ledger_df.empty:
         st.dataframe(ledger_df, use_container_width=True)
         
-        st.write("---")
-        total_in = ledger_df["স্টক ইন (In)"].sum()
-        total_out = ledger_df["স্টক আউট (Out)"].sum()
-        total_cash = ledger_df["মোট টাকা (Amount)"].sum()
-        
-        c1, c2, c3 = st.columns(3)
-        c1.metric("মোট স্টক ইন (Total In)", f"{total_in} পিস")
-        c2.metric("মোট স্টক আউট (Total Out)", f"{total_out} পিস")
-        c3.metric("মোট বেচাকেনা (Total Sales)", f"₹ {total_cash}/-")
+        # ডাউনলোড বোতাম
+        with open(EXCEL_FILE, "rb") as file:
+            st.download_button(
+                label="📥 এক্সেল ফাইল ডাউনলোড করুন",
+                data=file,
+                file_name=EXCEL_FILE,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
     else:
         st.info("এখনো কোনো রেকর্ড নেই। বামদিকে মেসেজ লিখে প্রথম এন্ট্রি করুন।")
