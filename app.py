@@ -1,42 +1,27 @@
 import streamlit as st
 import google.generativeai as genai
 import pandas as pd
-
-st.title("Smart Business Ledger Bot 📊")
-st.write("আপনার ব্যবসার স্টক এবং সেলস আপডেট করার জন্য নিচে মেসেজ লিখুন।")
-
-# মেসেজ ইনপুট বক্স
-user_input = st.text_input("এখানে লিখুন (যেমন: আজ ৫০ পিস মাল ডেলিভারি দিলাম):")
-
-if st.button("আপডেট করুন"):
-    if user_input:
-        st.success(f"আপনার মেসেজটি রেকর্ড করা হয়েছে: {user_input}")
-    else:
-        st.warning("অনুগ্রহ করে কিছু একটা লিখুন।")
-        import streamlit as st
-import google.generativeai as genai
-import pandas as pd
 import json
 from datetime import datetime
 import os
 
-# ১. আপনার সঠিক API Key
+# ১. আপনার সঠিক API Key কনফিগারেশন
 API_KEY = "AIzaSyDuq2YKw8M3PHpsxtaSv6teOH7kZya0fPk"
+genai.configure(api_key=API_KEY)
 
 # লেজার ফাইলের নাম
 EXCEL_FILE = "business_ledger.xlsx"
 
-# ২. এক্সেল ফাইল লোড বা তৈরি করার ফাংশন (নতুন কলাম সহ)
+# ২. এক্সেল ফাইল লোড বা তৈরি করার ফাংশন
 def load_ledger():
     columns = ["তারিখ", "বিবরণ (Item)", "নাম (Party)", "স্টক ইন (In)", "স্টক আউট (Out)", "দর (Rate)", "মোট টাকা (Amount)"]
     if os.path.exists(EXCEL_FILE):
         try:
             df = pd.read_excel(EXCEL_FILE)
-            # যদি নতুন কলামগুলো না থাকে তবে যোগ করবে
             for col in columns:
                 if col not in df.columns:
                     df[col] = 0
-            return df[columns] # কলামের ক্রম ঠিক রাখার জন্য
+            return df[columns]
         except:
             return pd.DataFrame(columns=columns)
     else:
@@ -61,12 +46,10 @@ with col1:
         if user_input:
             with st.spinner("AI ডেটা প্রসেস করছে..."):
                 try:
-                    # ৪. ক্লায়েন্ট সেটআপ
-                    client = genai.Client(api_key=API_KEY)
-                    
+                    # ৪. এআই মডেল সেটআপ
                     prompt = f"""
                     You are a professional business accounting assistant. Analyze the text and extract structured information.
-                    Respond ONLY with a valid JSON object. Do not include markdown formatting or backticks.
+                    Respond ONLY with a valid JSON object. Do not include markdown formatting, backticks, or any conversational text.
                     
                     Text: "{user_input}"
                     
@@ -80,10 +63,8 @@ with col1:
                     }}
                     """
                     
-                    response = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=prompt,
-                    )
+                    model = genai.GenerativeModel("gemini-1.5-flash")
+                    response = model.generate_content(prompt)
                     
                     # JSON পার্স করা
                     clean_text = response.text.strip().replace("```json", "").replace("```", "")
@@ -93,15 +74,15 @@ with col1:
                     current_date = datetime.now().strftime("%d-%m-%Y")
                     qty = data.get('quantity', 0)
                     rate = data.get('rate', 0)
-                    total_amount = qty * rate # অটোমেটিক গুণ করবে
+                    total_amount = qty * rate
                     
-                    stock_in = qty if data['type'] == 'IN' else 0
-                    stock_out = qty if data['type'] == 'OUT' else 0
+                    stock_in = qty if data.get('type') == 'IN' else 0
+                    stock_out = qty if data.get('type') == 'OUT' else 0
                     
                     new_row = {
                         "তারিখ": current_date,
-                        "বিবরণ (Item)": data['item'],
-                        "নাম (Party)": data['party'],
+                        "বিবরণ (Item)": data.get('item', 'অজানা মাল'),
+                        "নাম (Party)": data.get('party', 'নগদ'),
                         "স্টক ইন (In)": stock_in,
                         "স্টক আউট (Out)": stock_out,
                         "দর (Rate)": rate,
@@ -115,7 +96,7 @@ with col1:
                     except:
                         ledger_df.to_csv("business_ledger.csv", index=False)
                     
-                    st.success("✅ লেজারে সফলভাবে আপডেট করা হয়েছে!")
+                    st.success("✅ লেজারে সফলভাবে আপডেট করা হয়েছে!")
                     st.rerun()
                     
                 except Exception as e:
@@ -126,10 +107,8 @@ with col1:
 with col2:
     st.subheader("📈 লাইভ লেজার খাতা (Excel View)")
     if not ledger_df.empty:
-        # টেবিলটিকে সুন্দর করে দেখানো
         st.dataframe(ledger_df, use_container_width=True)
         
-        # নিচে একটি ছোট্ট হিসাব প্যানেল (Summary)
         st.write("---")
         total_in = ledger_df["স্টক ইন (In)"].sum()
         total_out = ledger_df["স্টক আউট (Out)"].sum()
