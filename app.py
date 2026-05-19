@@ -1,34 +1,4 @@
-[3:06 pm, 19/05/2026] Raj: import streamlit as st
-import google.generativeai as genai
-import pandas as pd
-import json
-from datetime import datetime
-import os
-
-# ১. আপনার সঠিক API Key এবং লেটেস্ট ট্রান্সপোর্ট কনফিগারেশন
-API_KEY = "AIzaSyDuq2YKw8M3PHpsxtaSv6teOH7kZya0fPk"
-genai.configure(api_key=API_KEY, transport='rest')
-
-# লেজার ফাইলের নাম
-EXCEL_FILE = "business_ledger.xlsx"
-
-# ২. এক্সেল ফাইল লোড বা তৈরি করার ফাংশন
-def load_ledger():
-    columns = ["তারিখ", "বিবরণ (Item)", "নাম (Party)", "স্টক ইন (পিস)", "সেলস/স্টক আউট (পিস)", "দর (টাকা)", "মোট টাকা", "ধরণ"]
-    if os.path.exists(EXCEL_FILE):
-        try:
-            return pd.read_excel(EXCEL_FILE)
-        except Exception:
-            return pd.DataFrame(columns=columns)
-    else:
-        return pd.DataFrame(columns=columns)
-
-# ৩. জ…
-[3:13 pm, 19/05/2026] Raj: API_KEY = st.secrets["GEMINI_API_KEY"]
-[3:16 pm, 19/05/2026] Raj: GEMINI_API_KEY = "আপনার_নতুন_তৈরি_করা_API_KEY_এখানে_বসাবেন"
-[3:23 pm, 19/05/2026] Raj: API_KEY = os.environ.get("GEMINI_API_KEY", "আপনার_নতুন_তৈরি_করা_API_KEY_এখানেও_বসিয়ে_দিন")
-[3:27 pm, 19/05/2026] Raj: https://g.co/gemini/share/d7d5a9d60845
-[3:47 pm, 19/05/2026] Raj: import streamlit as st
+import streamlit as st
 import google.generativeai as genai
 import pandas as pd
 import json
@@ -73,7 +43,7 @@ def parse_message_with_ai(message):
         
         Text: "{message}"
         
-        Respond ONLY with a valid JSON object matching this structure (do not include any markdown formatting like json or , just the raw JSON text):
+        Respond ONLY with a valid JSON object matching this structure (do not include any markdown formatting like ```json or ```, just the raw JSON text):
         {{
             "item": "Name of the product/item or description",
             "party": "Name of the party or person if mentioned, otherwise leave empty string",
@@ -88,7 +58,7 @@ def parse_message_with_ai(message):
         response = model.generate_content(prompt)
         
         # জেমিনির উত্তর থেকে JSON ডেটা আলাদা করা এবং যাচাই করা
-        clean_text = response.text.strip().replace("json", "").replace("", "")
+        clean_text = response.text.strip().replace("```json", "").replace("```", "")
         data = json.loads(clean_text)
         return data
     except json.JSONDecodeError:
