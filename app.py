@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 
 # ১. আপনার সঠিক API Key এবং লেটেস্ট ট্রান্সপোর্ট কনফিগারেশন
-API_KEY = "AIzaSyDuq2YKw8M3PHpsxtaSv6teOH7kZya0fPk"
+API_KEY = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=API_KEY, transport='rest')
 
 # লেজার ফাইলের নাম
