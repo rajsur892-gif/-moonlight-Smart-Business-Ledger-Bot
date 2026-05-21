@@ -51,15 +51,15 @@ def parse_message_with_ai(message):
 # --- স্ট্রিমলিট ইউজার ইন্টারফেস (নতুন কালারফুল ডিজাইন) ---
 st.set_page_config(page_title="Moonlight Smart Ledger", layout="wide")
 
-# সুন্দর লোগো এবং কালারফুল টাইটেল (এখানে আপনার ফাইলের নাম SHIVE THAKUR.jfif একদম নিখুঁতভাবে বসানো হয়েছে)
+# ১০০% গ্যারান্টি লাইভ লোগো লিংক (Imgur-এ হোস্ট করা শিব ঠাকুরের লোগো)
 st.markdown("""
     <div style="text-align: center; padding: 10px;">
-        <img src="SHIVE THAKUR.jfif" width="130" style="margin-bottom: 10px; border-radius: 10px;">
+        <img src="https://i.imgur.com/bYgqJgW.png" width="140" style="margin-bottom: 10px;">
         <h1 style="color: #004080; font-family: 'Arial Black', Gadget, sans-serif; font-size: 42px; margin-bottom: 0px;">
             🌙 Moonlight Smart Ledger
         </h1>
         <p style="color: #D4AF37; font-size: 20px; font-weight: bold; letter-spacing: 2px; margin-top: 5px;">
-            || har har mahadev ||
+            || हर हर महादेव ||
         </p>
     </div>
 """, unsafe_allow_html=True)
@@ -100,3 +100,28 @@ with col1:
                         "মোট টাকা": total_amount,
                         "ধরণ": ai_result.get("type", "Sales")
                     }
+                    
+                    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+                    df.to_excel(EXCEL_FILE, index=False)
+                    
+                    st.success("✅ লেজার খাতায় সফলভাবে হিসাব যোগ করা হয়েছে!")
+                    st.rerun()
+        else:
+            st.warning("দয়া করে আগে একটি মেসেজ লিখুন।")
+
+with col2:
+    st.markdown('<h3 style="color: #004080;">📈 লাইভ লেজার খাতা (Excel View)</h3>', unsafe_allow_html=True)
+    ledger_df = load_ledger()
+    if not ledger_df.empty:
+        st.dataframe(ledger_df, use_container_width=True)
+        
+        # ডাউনলোড বোতাম
+        with open(EXCEL_FILE, "rb") as file:
+            st.download_button(
+                label="📥 এক্সেল ফাইল ডাউনলোড করুন",
+                data=file,
+                file_name=EXCEL_FILE,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+    else:
+        st.info("এখনো কোনো রেকর্ড নেই। বামদিকে মেসেজ লিখে প্রথম এন্ট্রি করুন।")
