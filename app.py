@@ -54,11 +54,11 @@ st.set_page_config(page_title="Moonlight Smart Ledger", layout="wide")
 # সুন্দর লোগো এবং কালারফুল টাইটেল (মহাদেব শিব ঠাকুরের থিমে নীল ও সোনালী রঙের গ্রেডিয়েন্ট)
 st.markdown("""
     <div style="text-align: center; padding: 10px;">
-        <img src="https://i.imgur.com/vHqY7Gz.png" width="120" style="margin-bottom: 10px;">
+        <img src="image_56ed50.png" width="130" style="margin-bottom: 10px; border-radius: 10px;">
         <h1 style="color: #004080; font-family: 'Arial Black', Gadget, sans-serif; font-size: 42px; margin-bottom: 0px;">
             🌙 Moonlight Smart Ledger
         </h1>
-        <p style="color: #D4AF37; font-size: 18px; font-weight: bold; letter-spacing: 2px; margin-top: 5px;">
+        <p style="color: #D4AF37; font-size: 20px; font-weight: bold; letter-spacing: 2px; margin-top: 5px;">
             || हर हर महादेव ||
         </p>
     </div>
