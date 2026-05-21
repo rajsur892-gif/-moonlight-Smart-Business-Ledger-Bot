@@ -49,23 +49,27 @@ def parse_message_with_ai(message):
         st.error(f"এআই প্রসেসিংয়ে সমস্যা হয়েছে: {e}")
         return None
 
-# --- স্ট্রিমলিট ইউজার ইন্টারফেস (নতুন কালারফুল ডিজাইন) ---
+# --- স্ট্রিমলিট ইউজার ইন্টারফেস (বড় লোগো এবং কালারফুল ডিজাইন) ---
 st.set_page_config(page_title="Moonlight Smart Ledger", layout="wide")
 
 # মাঝখানে লোগো এবং নাম সাজানোর জন্য ৩টি কলাম তৈরি করা হলো
 col_left, col_mid, col_right = st.columns([1, 2, 1])
 
 with col_mid:
-    # গিটহাব থেকে সরাসরি ছবি লোড করা (১০০% কাজ করবে)
+    # গিটহাব থেকে সরাসরি ছবি লোড করা এবং এর সাইজ বড় করা (width=300 করা হলো)
+    # আর ছবিটিকে নামের থেকে সামান্য একটু ওপরে তুলতে padding-top দেওয়া হলো
+    st.markdown('<div style="text-align: center; padding-top: 20px;">', unsafe_allow_html=True)
     try:
         logo_image = Image.open("SHIVE THAKUR.jfif")
-        st.image(logo_image, width=140)
+        # ছবির সাইজ আগের থেকে প্রায় দ্বিগুণ বড় করে দেওয়া হলো
+        st.image(logo_image, width=300, caption="Moonlight Business Ledger", use_column_width=False)
     except Exception:
         pass  # ছবি না পেলে অ্যাপ যেন ক্র্যাশ না করে
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # কালারফুল নাম এবং মহাদেব স্লোগান
+    # কালারফুল নাম এবং মহাদeb স্লোগান (এদের পজিশন ছবির থেকে সামান্য একটু নিচে রাখা হলো padding-top: 10px দিয়ে)
     st.markdown("""
-        <div style="text-align: center;">
+        <div style="text-align: center; padding-top: 10px;">
             <h1 style="color: #004080; font-family: 'Arial Black', Gadget, sans-serif; font-size: 42px; margin-bottom: 0px; margin-top: -20px;">
                 🌙 Moonlight Smart Ledger
             </h1>
