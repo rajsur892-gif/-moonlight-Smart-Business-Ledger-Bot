@@ -7,7 +7,7 @@ import os
 from PIL import Image
 
 # ১. আপনার জেমিনি এআই চাবি (পুরনো চাবিটিই এখানে রাখা হলো)
-API_KEY = "AIzaSyDuq2YKw8M3PHpsxtaSv6teOH7kZya0fPk"
+API_KEY = "AIzaSyCuBt_XKXQRiiLV5ueUZw6aF9LoNDO9DPg"
 genai.configure(api_key=API_KEY)
 
 # লেজার ফাইলের নাম
