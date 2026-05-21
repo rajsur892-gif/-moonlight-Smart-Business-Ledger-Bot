@@ -4,6 +4,7 @@ import pandas as pd
 import json
 from datetime import datetime
 import os
+from PIL import Image  # গিটহাবের ছবি সরাসরি পড়ার জন্য
 
 # ১. আপনার জেমিনি এআই চাবি (পুরনো চাবিটিই এখানে রাখা হলো)
 API_KEY = "AIzaSyDuq2YKw8M3PHpsxtaSv6teOH7kZya0fPk"
@@ -51,18 +52,28 @@ def parse_message_with_ai(message):
 # --- স্ট্রিমলিট ইউজার ইন্টারফেস (নতুন কালারফুল ডিজাইন) ---
 st.set_page_config(page_title="Moonlight Smart Ledger", layout="wide")
 
-# ১০০% গ্যারান্টি লাইভ লোগো লিংক (Imgur-এ হোস্ট করা শিব ঠাকুরের লোগো)
-st.markdown("""
-    <div style="text-align: center; padding: 10px;">
-        <img src="https://i.imgur.com/bYgqJgW.png" width="140" style="margin-bottom: 10px;">
-        <h1 style="color: #004080; font-family: 'Arial Black', Gadget, sans-serif; font-size: 42px; margin-bottom: 0px;">
-            🌙 Moonlight Smart Ledger
-        </h1>
-        <p style="color: #D4AF37; font-size: 20px; font-weight: bold; letter-spacing: 2px; margin-top: 5px;">
-            || हर हर महादेव ||
-        </p>
-    </div>
-""", unsafe_allow_html=True)
+# মাঝখানে লোগো এবং নাম সাজানোর জন্য ৩টি কলাম তৈরি করা হলো
+col_left, col_mid, col_right = st.columns([1, 2, 1])
+
+with col_mid:
+    # গিটহাব থেকে সরাসরি ছবি লোড করা (১০০% কাজ করবে)
+    try:
+        logo_image = Image.open("SHIVE THAKUR.jfif")
+        st.image(logo_image, width=140)
+    except Exception:
+        pass  # ছবি না পেলে অ্যাপ যেন ক্র্যাশ না করে
+
+    # কালারফুল নাম এবং মহাদেব স্লোগান
+    st.markdown("""
+        <div style="text-align: center;">
+            <h1 style="color: #004080; font-family: 'Arial Black', Gadget, sans-serif; font-size: 42px; margin-bottom: 0px; margin-top: -20px;">
+                🌙 Moonlight Smart Ledger
+            </h1>
+            <p style="color: #D4AF37; font-size: 20px; font-weight: bold; letter-spacing: 2px; margin-top: 5px;">
+                || हर हर महादेव ||
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
 st.write("---")
 st.write("### 📊 আপনার ব্যবসার স্টক, সেলস এবং টাকার হিসাব আপডেট করার জন্য নিচে মেসেজ লিখুন।")
